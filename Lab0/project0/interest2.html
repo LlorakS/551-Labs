@@ -5,13 +5,19 @@
     <title>My Plants</title>
     <style>
 
-        .collage-bg{
-            min-height: 100vh;
-            background-image: url("");
-            background-size: 800px 800px;
-            background-repeat: repeat;
-            background-position: center;
+        body {
+        margin: 0;
+        min-height: 100vh;
+
+        /* Background picture*/
+        background-image: url("plant_background.webp");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        color:blue;
+        font-family: Arial, Helvetica, sans-serif;
         }
+
 
 
         /* Top header */
@@ -68,6 +74,18 @@
             border-radius: 10px;
         }
 
+        .plant-img{
+            width:45%;
+            max-width: 160px;
+            border-radius: 10px;
+            margin: 5px
+        }
+
+        .plant-reqs{
+            color: rgb(50, 53, 58);
+            margin-bottom: 10px;
+        }
+
 
     </style>
     <link
@@ -75,7 +93,6 @@
         href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
     >
 
-    <!-- Custom styles -->
     <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -83,79 +100,121 @@
 
 
 <body>
+<!-- Nav Bar -->
+    <header class="top-bar">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="site-title">
+                        <a href="interest2.html">My Plants</a>
+                    </h1>
+                </div>
 
-    <!-- Navigation Bar -->
-    <div class="collage-bg">
-        <header class="top-bar">
-            <div class="container-fluid">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <h1 class="site-title">
-                            <a href="interest2.html">My Plants</a>
-                        </h1>
-                    </div>
+                <!-- Right nav -->
+                <div class="col-md-6 text-md-right">
+                    <nav class="nav-links">
+                        <a href='index.html'>Who is Karoll?</a>
+                        <a href="interest1.html">My People</a>
+                        <a href="interest3.html">Food</a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </header>
 
-                    <!-- Right navigation -->
-                    <div class="col-md-6 text-md-right">
-                        <nav class="nav-links">
-                            <a href='index.html'>Who is Karoll?</a>
-                            <a href="interest1.html">My People</a>
-                            <a href="interest3.html">Food</a>
-                        </nav>
+    <!-- Hero Section -->
+    <main class="hero-section">
+        <div class="container-fluid">
+
+            <!-- Money Trees -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="hero-content">
+                        <div class="row align-items-center">
+                            <div class="col-md-7">
+                                <h2 class="hero-heading">Money Trees</h2>
+                                <p class="hero-text">Beautiful trees, grow tall and/or bushy depending on care.
+                                </p>
+                                    <ul class="plant-reqs">
+                                        <li>Water when soil is 75% dry </li>
+                                        <li>Bright and indirect light</li>
+                                        <li>Too much direct light will burn the leaves</li>                                         </li>
+                                    </ul>
+                            </div>
+
+                            <div class="col-md-5 text-center">
+                                <img src="MyMoney.jpeg" class="plant-img" alt="My Money Tree">
+                                <img src="moneyTree.jpg" class="plant-img" alt="Money Tree">
+                            </div>
+
+                        </div>
+
                     </div>
                 </div>
             </div>
-        </header>
-    
-        <!-- Hero Section -->
-        <main class="hero-section">
-            <div class="container-fluid">
-                <div class="col">
 
-                    <div class="row-md-4">
-                        <div class="hero-content">
-                            <h2 class="hero-heading">Money Trees</h2>
-                            <style> h2{ color:rgb(1, 31, 79)} </style>
+            <!-- African Flame Violet -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="hero-content">
 
-                            <p class="hero-text">
-                                Water when 75% dry
-                            </p>
+                        <div class="row align-items-center">
+
+                            <div class="col-md-7">
+                                <h2 class="hero-heading">Bolivian Turtle Vine</h2>
+                                <p class="hero-text"> Beautiful metallic looking leaves, bright red flowers, grows as a falling vine.
+                                </p>
+                                    <ul class="plant-reqs">
+                                        <li>Water often, keep soil moist</li>
+                                        <li>Bright indirect light</li>
+                                        <li>Bottom water to avoid letting water touch the leaves</li>                                         </li>
+                                    </ul>
+                            </div>
+
+                            <div class="col-md-5 text-center">
+                                <img src="MyAfViolet.jpeg" class="plant-img" alt="My African Flame Violet">
+                                <img src="FlameViolet.webp" class="plant-img" alt="Fully grown African Flame Violet">
+                            </div>
+
                         </div>
-                    </div>
 
-                    <div class="row-md-4">
-                        <div class="hero-content">
-                            <h2 class="hero-heading">Bolivian Turtle Vine</h2>
-                            <style> h2{ color:rgb(1, 31, 79)} </style>
-                                
-                            <p class="hero-text">
-                                
-                            </p>
-                        </div>
                     </div>
-
-                    <div class="row-md-4">
-                        <div class="hero-content">
-                            <h2 class="hero-heading">Fiddle Fig Leaf</h2>
-                            <style> h2{ color:rgb(1, 31, 79)} </style>
-                                
-                            <p class="hero-text">
-                                
-                            </p>
-                        </div>
-                    </div>
-
                 </div>
-
-
-
             </div>
-        </main>
-        
-    </div>
+
+            <!-- Fiddle Leaf Fig -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="hero-content">
+
+                        <div class="row align-items-center">
+
+                            <div class="col-md-7">
+                                <h2 class="hero-heading">Fiddle Leaf Fig</h2>
+                                <p class="hero-text">Very pretty plant, grows tall and strong, leaves are quite thick.
+                                </p>
+                                    <ul>
+                                        <li>Needs consistent watering</li>
+                                        <li>Requires bright light</li>
+                                        <li>Rotate roughly evey week to encourage consistent/full grouth</li>
+                                    </ul>
+                            </div>
+
+                            <div class="col-md-5 text-center">
+                                <img src="MyFig.jpeg" class="plant-img" alt="My Fiddle Leaf Fig">
+                                <img src="fiddleFigLeaf.jpg" class="plant-img" alt="Fiddle Leaf Fig">
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
 
 
-    <body>
 
 </body>
 </html>

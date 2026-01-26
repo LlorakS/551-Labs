@@ -2,16 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>My Plants</title>
+    <title>Food</title>
     <style>
 
-        .collage-bg{
-            min-height: 100vh;
-            background-image: url("");
-            background-size: 800px 800px;
-            background-repeat: repeat;
-            background-position: center;
+        body {
+        margin: 0;
+        min-height: 100vh;
+
+        /* Background picture*/
+        background-image: url("food_background.jpg");
+
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        color:blue;
+        font-family: Arial, Helvetica, sans-serif;
         }
+
 
 
         /* Top header */
@@ -49,6 +56,7 @@
         }
 
         .hero-heading {
+            color:rgb(1, 31, 79);
             font-size: 48px;
             margin-bottom: 20px;
             font-weight:lighter;
@@ -68,6 +76,12 @@
             border-radius: 10px;
         }
 
+        .food-pic {
+            width:45%;
+            size: 50px 50px;
+            border-radius: 10px;
+            margin: 10px
+        }
 
     </style>
     <link
@@ -85,68 +99,59 @@
 <body>
 
     <!-- Navigation Bar -->
-    <div class="collage-bg">
-        <header class="top-bar">
-            <div class="container-fluid">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <h1 class="site-title">
-                            <a href="interest3.html">Food</a>
-                        </h1>
-                    </div>
+    <header class="top-bar">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="site-title">
+                        <a href="interest3.html">Food</a>
+                    </h1>
+                </div>
 
-                    <!-- Right navigation -->
-                    <div class="col-md-6 text-md-right">
-                        <nav class="nav-links">
-                            <a href='index.html'>Who is Karoll?</a>
-                            <a href="interest1.html">My People</a>
-                            <a href="interest2.html">My Plants</a>
+                <!-- Right navigation -->
+                <div class="col-md-6 text-md-right">
+                    <nav class="nav-links">
+                        <a href='index.html'>Who is Karoll?</a>
+                        <a href="interest1.html">My People</a>
+                        <a href="interest2.html">My Plants</a>
 
-                        </nav>
-                    </div>
+                    </nav>
                 </div>
             </div>
-        </header>
-    
-        <!-- Hero Section -->
-        <main class="hero-section">
-            <div class="container-fluid">
-                <div class="col">
+        </div>
+    </header>
 
-                    <div class="row-md-4">
-                        <div class="hero-content">
-                            <h2 class="hero-heading">s</h2>
-                            <style> h2{ color:rgb(1, 31, 79)} </style>
+    <!-- Hero Section -->
+    <main class="hero-section">
+        <div class="container-fluid">
+            <div class="row justify-content-center">
+                <div class="col-md-10">
+                    <div class="hero-content">
+                        <div class="row align-items-center">
+                            <div class="col-md-7">
+                                <h2 class="hero-heading">Food</h2>
+                                <p class="hero-text">
+                                    I love food
+                                </p>
+                            </div>
 
-                            <p class="hero-text">
-                                Water when 75% dry
-                            </p>
+                            <div class="col-md-5 text-center">
+                                <img src="food_pic1.jpeg" class="food-pic">
+                                <img src="food_pic2.jpeg" class="food-pic">
+                            </div>
                         </div>
                     </div>
 
-                    <div class="row-md-4">
-                        <div class="hero-content">
-                            <h2 class="hero-heading">B</h2>
-                            <style> h2{ color:rgb(1, 31, 79)} </style>
-                                
-                            <p class="hero-text">
-                                
-                            </p>
-                        </div>
-                    </div>
-
-
                 </div>
 
-
-
             </div>
-        </main>
+        </div>
+
+
         
-    </div>
+    </main>
+    
 
-
-    <body>
 
 </body>
 </html>
