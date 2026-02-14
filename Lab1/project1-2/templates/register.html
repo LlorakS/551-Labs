@@ -1,0 +1,18 @@
+<!doctype html>
+<title>Register</title>
+<h1>Register</h1>
+<form method="POST">
+    Username: <input type="text" name="username"><br><br>
+    Password: <input type="password" name="password"><br><br>
+    <input type="submit" value="Register">
+</form>
+<a href="{{ url_for('login') }}">Already have an account? Log in</a>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
