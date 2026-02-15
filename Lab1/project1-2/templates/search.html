@@ -1,27 +1,31 @@
-<!doctype html>
-<title>Search</title>
-<h1>Search Books</h1>
+{% extends "layout.html" %}
+
+{% block body %}
+
+<h2 class="text-center mb-4">Search Books</h2>
+
 <form method="POST">
-    <input type="text" name="query" placeholder="Search by ISBN, title, or author">
-    <input type="submit" value="Search">
+    <div class="form-group">
+        <input type="text" name="query" class="form-control"
+               placeholder="Search by ISBN, Title, or Author">
+    </div>
+
+    <button class="btn btn-danger btn-block">Search</button>
 </form>
 
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <ul>
-    {% for message in messages %}
-      <li>{{ message }}</li>
-    {% endfor %}
-    </ul>
-  {% endif %}
-{% endwith %}
+<hr>
 
-<ul>
+<ul class="list-group">
 {% for book in results %}
-    <li>
-        <a href="{{ url_for('book', isbn=book.isbn) }}">{{ book.title }} by {{ book.author }} ({{ book.year }})</a>
+    <li class="list-group-item">
+        <a href="{{ url_for('book', isbn=book.isbn) }}">
+            <strong>{{ book.title }}</strong> by {{ book.author }} 
+            <span class="text-muted">({{ book.year }})</span>
+        </a>
     </li>
+{% else %}
+    {% if request.method == "POST" %}
+        <li class="list-group-item text-center">No books match your search.</li>
+    {% endif %}
 {% endfor %}
 </ul>
-
-<a href="{{ url_for('logout') }}">Logout</a>

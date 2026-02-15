@@ -1,31 +1,37 @@
-
 import os
 from flask import Flask, session, render_template, request, redirect, url_for, flash
 from flask_session import Session
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import scoped_session, sessionmaker
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
-# Check for environment variable
-if not os.getenv("DATABASE_URL"):
+# ==========================================
+# 1. FIX DATABASE URL SILENTLY
+# ==========================================
+db_url = os.getenv("DATABASE_URL")
+if not db_url:
     raise RuntimeError("DATABASE_URL is not set")
+
+# SQLAlchemy 1.4+ requires "postgresql://" but many hosts provide "postgres://"
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
 
 # Configure session to use filesystem
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
-app.secret_key = os.urandom(24)  # Needed for session
+app.secret_key = os.urandom(24)  # Needed for session flashing
 Session(app)
 
 # Set up database
-engine = create_engine(os.getenv("DATABASE_URL"))
+engine = create_engine(db_url)
 db = scoped_session(sessionmaker(bind=engine))
 
 
-# ====================
+# ==========================================
 # ROUTES
-# ====================
+# ==========================================
 
 @app.route("/")
 def index():
@@ -37,26 +43,44 @@ def index():
 # ----- Registration -----
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    # Clear any stuck database connections
+    db.rollback()
+    
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+        
         if not username or not password:
-            flash("Username and password are required.")
+            flash("Username and password are required.", "warning")
             return render_template("register.html")
 
-        # Check if username exists
-        user = db.execute("SELECT * FROM users WHERE username = :username", {"username": username}).fetchone()
-        if user:
-            flash("Username already exists.")
-            return render_template("register.html")
+        try:
+            # 1. Check if username exists
+            user = db.execute(
+                text("SELECT id FROM users WHERE username = :username"), 
+                {"username": username}
+            ).mappings().fetchone()
+            
+            if user:
+                flash("Username already exists.", "danger")
+                return render_template("register.html")
 
-        # Insert user into database
-        hashed_password = generate_password_hash(password)
-        db.execute("INSERT INTO users (username, password) VALUES (:username, :password)",
-                   {"username": username, "password": hashed_password})
-        db.commit()
-        flash("Registration successful! Please log in.")
-        return redirect(url_for("login"))
+            # 2. Insert new user
+            hashed_password = generate_password_hash(password)
+            db.execute(
+                text("INSERT INTO users (username, password) VALUES (:username, :password)"),
+                {"username": username, "password": hashed_password}
+            )
+            db.commit()
+            
+            flash("Registration successful! Please log in.", "success")
+            return redirect(url_for("login"))
+            
+        except Exception as e:
+            db.rollback() 
+            print(f"Database Error: {e}")
+            flash("An error occurred during registration. Please try again.", "danger")
+            return render_template("register.html")
     
     return render_template("register.html")
 
@@ -64,18 +88,34 @@ def register():
 # ----- Login -----
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    # Clear any stuck database connections
+    db.rollback()
+    
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
 
-        user = db.execute("SELECT * FROM users WHERE username = :username", {"username": username}).fetchone()
-        if user and check_password_hash(user.password, password):
-            session["user_id"] = user.id
-            session["username"] = user.username
-            return redirect(url_for("search"))
-        else:
-            flash("Invalid username or password.")
-            return render_template("login.html")
+        try:
+            # Fetch user as a dictionary mapping
+            result = db.execute(
+                text("SELECT id, username, password FROM users WHERE username = :username"), 
+                {"username": username}
+            ).mappings().fetchone()
+
+            # Check if user exists AND password matches
+            if result and check_password_hash(result["password"], password):
+                session["user_id"] = result["id"]
+                session["username"] = result["username"]
+                return redirect(url_for("search"))
+            else:
+                flash("Invalid username or password.", "danger")
+                return redirect(url_for("login")) # Redirect clears the POST request
+                
+        except Exception as e:
+            db.rollback()
+            print(f"Database Error: {e}")
+            flash("A server error occurred. Please try again.", "danger")
+            return redirect(url_for("login"))
     
     return render_template("login.html")
 
@@ -84,7 +124,7 @@ def login():
 @app.route("/logout")
 def logout():
     session.clear()
-    flash("You have been logged out.")
+    flash("You have been logged out.", "success")
     return redirect(url_for("login"))
 
 
@@ -97,13 +137,23 @@ def search():
     results = []
     if request.method == "POST":
         query = request.form.get("query")
-        query = f"%{query}%"
-        results = db.execute("""
-            SELECT * FROM books
-            WHERE isbn ILIKE :q OR title ILIKE :q OR author ILIKE :q
-            """, {"q": query}).fetchall()
-        if not results:
-            flash("No results found.")
+        search_query = f"%{query}%"
+        
+        try:
+            results = db.execute(
+                text("""
+                SELECT isbn, title, author, year FROM books
+                WHERE isbn ILIKE :q OR title ILIKE :q OR author ILIKE :q
+                """), 
+                {"q": search_query}
+            ).mappings().fetchall()
+                
+            if not results:
+                flash("No results found.", "warning")
+        except Exception as e:
+            db.rollback()
+            print(f"Database Error: {e}")
+            flash("Error searching database.", "danger")
     
     return render_template("search.html", results=results)
 
@@ -114,43 +164,24 @@ def book(isbn):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    book = db.execute("SELECT * FROM books WHERE isbn = :isbn", {"isbn": isbn}).fetchone()
-    if not book:
-        flash("Book not found.")
+    try:
+        book_data = db.execute(
+            text("SELECT isbn, title, author, year FROM books WHERE isbn = :isbn"), 
+            {"isbn": isbn}
+        ).mappings().fetchone()
+
+        if not book_data:
+            flash("Book not found.", "warning")
+            return redirect(url_for("search"))
+            
+        return render_template("book.html", book=book_data)
+        
+    except Exception as e:
+        db.rollback()
+        print(f"Database Error: {e}")
+        flash("Error retrieving book details.", "danger")
         return redirect(url_for("search"))
-    
-    return render_template("book.html", book=book)
 
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-
-
-# import os
-
-# from flask import Flask, session
-# from flask_session import Session
-# from sqlalchemy import create_engine
-# from sqlalchemy.orm import scoped_session, sessionmaker
-
-# app = Flask(__name__)
-
-# # Check for environment variable
-# if not os.getenv("DATABASE_URL"):
-#     raise RuntimeError("DATABASE_URL is not set")
-
-# # Configure session to use filesystem
-# app.config["SESSION_PERMANENT"] = False
-# app.config["SESSION_TYPE"] = "filesystem"
-# Session(app)
-
-# # Set up database
-# engine = create_engine(os.getenv("DATABASE_URL"))
-# db = scoped_session(sessionmaker(bind=engine))
-
-
-# @app.route("/")
-# def index():
-#     return "Project 1: TODO"
