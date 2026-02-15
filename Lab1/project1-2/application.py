@@ -21,7 +21,7 @@ if db_url.startswith("postgres://"):
 # Configure session to use filesystem
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
-app.secret_key = os.urandom(24)  # Needed for session flashing
+app.secret_key = os.getenv("SECRET_KEY", "fallback-secret-key-for-dev")
 Session(app)
 
 # Set up database
