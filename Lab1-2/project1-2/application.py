@@ -1,24 +1,25 @@
 import os
-from flask import Flask, session, render_template, request, redirect, url_for, flash
+import json
+from flask import Flask, session, render_template, request, redirect, url_for, flash,jsonify, Response
 from flask_session import Session
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import scoped_session, sessionmaker
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
+app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
+
 
 # ==========================================
 # 1. FIX DATABASE URL SILENTLY
-# ==========================================
 db_url = os.getenv("DATABASE_URL")
 if not db_url:
     raise RuntimeError("DATABASE_URL is not set")
 
-# SQLAlchemy 1.4+ requires "postgresql://" but many hosts provide "postgres://"
+
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
-# Configure session to use filesystem
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 app.secret_key = os.getenv("SECRET_KEY", "fallback-secret-key-for-dev")
@@ -31,8 +32,6 @@ db = scoped_session(sessionmaker(bind=engine))
 
 # ==========================================
 # ROUTES
-# ==========================================
-
 @app.route("/")
 def index():
     if "user_id" in session:
@@ -261,6 +260,49 @@ def submit_review(isbn):
         db.rollback()
         flash("You have already submitted a review for this book.", "danger")
         return redirect(url_for("book", isbn=isbn))
+
+
+# ------ API route ------
+@app.route("/api/<string:isbn>")
+def api_book(isbn):
+
+    book = db.execute(
+        text("""
+            SELECT isbn, title, author, year
+            FROM books
+            WHERE isbn = :isbn
+        """),
+        {"isbn": isbn}
+    ).mappings().fetchone()
+
+    if not book:
+        return jsonify({"error": "Book not found"}), 404
+
+    # Get review statistics
+    stats = db.execute(
+        text("""
+            SELECT COUNT(*) AS review_count,
+                   AVG(rating) AS average_score
+            FROM reviews
+            JOIN books ON reviews.book_id = books.id
+            WHERE books.isbn = :isbn
+        """),
+        {"isbn": isbn}
+    ).mappings().fetchone()
+
+    response = Response(
+        json.dumps({
+            "title": book["title"],
+            "author": book["author"],
+            "year": book["year"],
+            "isbn": book["isbn"],
+            "review_count": stats["review_count"],
+            "average_score": float(stats["average_score"]) if stats["average_score"] else 0
+        }, indent=4),
+        mimetype="application/json"
+)
+
+    return response
 
 
 
