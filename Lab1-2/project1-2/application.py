@@ -96,7 +96,6 @@ def login():
         password = request.form.get("password")
 
         try:
-            # Fetch user as a dictionary mapping
             result = db.execute(
                 text("SELECT id, username, password FROM users WHERE username = :username"), 
                 {"username": username}
@@ -165,22 +164,106 @@ def book(isbn):
         return redirect(url_for("login"))
 
     try:
+        # Get book
         book_data = db.execute(
-            text("SELECT isbn, title, author, year FROM books WHERE isbn = :isbn"), 
+            text("SELECT id, isbn, title, author, year FROM books WHERE isbn = :isbn"),
             {"isbn": isbn}
         ).mappings().fetchone()
 
         if not book_data:
             flash("Book not found.", "warning")
             return redirect(url_for("search"))
-            
-        return render_template("book.html", book=book_data)
-        
+
+        # Get reviews
+        reviews = db.execute(
+            text("""
+                SELECT users.username, reviews.rating, reviews.review
+                FROM reviews
+                JOIN users ON reviews.user_id = users.id
+                WHERE reviews.book_id = :book_id
+            """),
+            {"book_id": book_data["id"]}
+        ).mappings().fetchall()
+
+        # Google Books API #
+        import requests
+        res = requests.get(
+            "https://www.googleapis.com/books/v1/volumes",
+            params={"q": f"isbn:{isbn}"}
+        )
+        print(res.json())
+
+        data = res.json()
+
+        average_rating = None
+        ratings_count = None
+        description = None
+
+        if data.get("totalItems", 0) > 0:
+            volume = data["items"][0]["volumeInfo"]
+            average_rating = volume.get("averageRating")
+            ratings_count = volume.get("ratingsCount")
+            description = volume.get("description")
+
+        return render_template(
+            "book.html",
+            book=book_data,
+            reviews=reviews,
+            average_rating=average_rating,
+            ratings_count=ratings_count,
+            description=description
+        )
+
     except Exception as e:
         db.rollback()
-        print(f"Database Error: {e}")
-        flash("Error retrieving book details.", "danger")
-        return redirect(url_for("search"))
+        flash("You have already submitted a review for this book!", "danger")
+        return redirect(url_for("book", isbn=isbn))    
+
+
+
+# ----- Review Page -----
+@app.route("/review/<isbn>", methods=["POST"])
+def submit_review(isbn):
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    rating = request.form.get("rating")
+    review_text = request.form.get("review")
+
+    try:
+        # Get book id properly
+        book = db.execute(
+            text("SELECT id FROM books WHERE isbn = :isbn"),
+            {"isbn": isbn}
+        ).mappings().fetchone()
+
+        if not book:
+            return "Book not found", 404
+
+        # Insert review 
+        db.execute(
+            text("""
+                INSERT INTO reviews (user_id, book_id, rating, review)
+                VALUES (:user_id, :book_id, :rating, :review)
+            """),
+            {
+                "user_id": session["user_id"],
+                "book_id": book["id"],
+                "rating": rating,
+                "review": review_text
+            }
+        )
+
+        db.commit()
+
+    except Exception as e:
+        db.rollback()
+        flash("You have already submitted a review for this book.", "danger")
+        return redirect(url_for("book", isbn=isbn))
+
+
+
 
 
 if __name__ == "__main__":

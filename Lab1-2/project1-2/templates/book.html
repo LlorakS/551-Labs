@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+
+<title>{{ book.title }}</title>
+<h1>{{ book.title }}</h1>
+<p><strong>Author:</strong> {{ book.author }}</p>
+<p><strong>Year:</strong> {{ book.year }}</p>
+<p><strong>ISBN:</strong> {{ book.isbn }}</p>
+
+
+<h2>Book Description</h2>
+
+{% if description %}
+    <p>{{ description }}</p>
+{% else %}
+    <p>There is no description avaialble.</p>
+{% endif %}
+
+
+<h2>Google Ratings</h2>
+
+{% if average_rating %}
+    <p>Average Rating: {{ average_rating }} / 5</p>
+    <p>Number of Ratings: {{ ratings_count }}</p>
+{% else %}
+    <p>No Google rating available.</p>
+{% endif %}
+
+<hr>
+
+<h2>Submit a Review</h2>
+
+<form action="{{ url_for('submit_review', isbn=book.isbn) }}" method="POST">
+    
+    <label for="rating">Rating (0–5):</label>
+    <select name="rating" required>
+        <option value="">Select</option>
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+    </select>
+
+    <br><br>
+
+    <label for="review">Review:</label><br>
+    <textarea name="review" rows="4" cols="50" required></textarea>
+
+    <br><br>
+
+    <button type="submit">Submit Review</button>
+</form>
+
+<hr>
+
+<h2>User Reviews</h2>
+
+{% if reviews %}
+    {% for r in reviews %}
+        <p>
+            <strong>{{ r.username }}</strong> —
+            Rating: {{ r.rating }}/5
+        </p>
+        <p>{{ r.review }}</p>
+        <hr>
+    {% endfor %}
+{% else %}
+    <p>No reviews yet.</p>
+{% endif %}
+
+<div class="text-center mt-3;">
+    <a href="{{ url_for('search') }}" class="btn btn-outline-danger">Back to search</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>
+</div>
+
+{% endblock %}
+
