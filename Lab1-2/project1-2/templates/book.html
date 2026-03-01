@@ -34,10 +34,9 @@
 
 <form action="{{ url_for('submit_review', isbn=book.isbn) }}" method="POST">
     
-    <label for="rating">Rating (0–5):</label>
+    <label for="rating">Rating (1–5):</label>
     <select name="rating" required>
         <option value="">Select</option>
-        <option value="0">0</option>
         <option value="1">1</option>
         <option value="2">2</option>
         <option value="3">3</option>

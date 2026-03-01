@@ -290,6 +290,21 @@ def api_book(isbn):
         {"isbn": isbn}
     ).mappings().fetchone()
 
+    # 🔥 Google Books API call (ADD THIS PART)
+    import requests
+    res = requests.get(
+        "https://www.googleapis.com/books/v1/volumes",
+        params={"q": f"isbn:{isbn}"}
+    )
+
+    data = res.json()
+    description = None
+
+    if data.get("totalItems", 0) > 0:
+        volume = data["items"][0]["volumeInfo"]
+        description = volume.get("description")
+
+    # Return JSON response
     response = Response(
         json.dumps({
             "title": book["title"],
@@ -297,12 +312,15 @@ def api_book(isbn):
             "year": book["year"],
             "isbn": book["isbn"],
             "review_count": stats["review_count"],
-            "average_score": float(stats["average_score"]) if stats["average_score"] else 0
+            "average_score": float(stats["average_score"]) if stats["average_score"] else 0,
+            "description": description   # 🔥 Added here
         }, indent=4),
         mimetype="application/json"
-)
+    )
 
     return response
+
+
 
 
 
