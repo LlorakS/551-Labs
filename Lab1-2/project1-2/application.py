@@ -190,6 +190,7 @@ def book(isbn):
             "https://www.googleapis.com/books/v1/volumes",
             params={"q": f"isbn:{isbn}"}
         )
+        
         print(res.json())
 
         data = res.json()
@@ -290,7 +291,7 @@ def api_book(isbn):
         {"isbn": isbn}
     ).mappings().fetchone()
 
-    # 🔥 Google Books API call (ADD THIS PART)
+    # Google Books API call
     import requests
     res = requests.get(
         "https://www.googleapis.com/books/v1/volumes",

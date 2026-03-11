@@ -23,6 +23,8 @@
             <span class="text-muted">({{ book.year }})</span>
         </a>
     </li>
+
+
 {% else %}
     {% if request.method == "POST" %}
         <li class="list-group-item text-center">No books match your search.</li>
