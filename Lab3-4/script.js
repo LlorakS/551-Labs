@@ -25,7 +25,7 @@ async function searchPermits() {
         return;
     }
 
-    // Correct Calgary API endpoint
+    // Calgary API endpoint
     let url = `https://data.calgary.ca/resource/c2es-76ed.json?$where=issueddate between '${start}' and '${end}'&$limit=200`;
 
     console.log("Request:", url);
@@ -77,7 +77,26 @@ function displayPermits(data) {
     });
 
     if (markers.getLayers().length > 0) {
-        map.fitBounds(markers.getBounds());
+        map.fitBounds(markers.getBounds());h
     }
 
 }
+
+
+var mapboxLayer = L.tileLayer(
+'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoia21veWFubyIsImEiOiJjbW13Zms5ZHkwY3hoMnJvc25lcm00eHp2In0.wgIehNN2_gWDoPH1qBvV8g', {
+    id: 'kmoyano/cmmwgzav900e501skbpi072ym',
+    tileSize: 512,
+    zoomOffset: -1,
+    attribution: '© Mapbox'
+});
+
+var overlayMaps = {
+    "Traffic Incidents Layer": mapboxLayer
+};
+
+var baseMaps = {
+    "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+};
+
+L.control.layers(baseMaps, overlayMaps).addTo(map);
