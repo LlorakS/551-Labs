@@ -77,26 +77,68 @@ function displayPermits(data) {
     });
 
     if (markers.getLayers().length > 0) {
-        map.fitBounds(markers.getBounds());h
+        map.fitBounds(markers.getBounds());
     }
 
 }
 
 
+
+
+
+// OSM
+var osmLayer = L.tileLayer(
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  { attribution: '© OpenStreetMap' }
+).addTo(map);
+
+// Mapbox
 var mapboxLayer = L.tileLayer(
-'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoia21veWFubyIsImEiOiJjbW13Zms5ZHkwY3hoMnJvc25lcm00eHp2In0.wgIehNN2_gWDoPH1qBvV8g', {
-    id: 'kmoyano/cmmwgzav900e501skbpi072ym',
+  'https://api.mapbox.com/styles/v1/kmoyano/cmmwgzav900e501skbpi072ym/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoia21veWFubyIsImEiOiJjbW13a3Q1b2oydmEzMnFvZWloZWdtbnE2In0.AgD8wsqS20f_8JiXUw71kQ',
+  {
     tileSize: 512,
     zoomOffset: -1,
     attribution: '© Mapbox'
-});
+  }
+);
 
-var overlayMaps = {
-    "Traffic Incidents Layer": mapboxLayer
-};
-
+// Layer control
 var baseMaps = {
-    "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+  "OpenStreetMap": osmLayer,
+  "Traffic Incidents Map": mapboxLayer
 };
 
-L.control.layers(baseMaps, overlayMaps).addTo(map);
+L.control.layers(baseMaps).addTo(map);
+
+
+//  FETChiNG TRAFFIC DATA
+async function loadTrafficData() {
+
+    let url = "https://data.calgary.ca/resource/35ra-9556.json?$limit=200";
+
+    let response = await fetch(url);
+    let data = await response.json();
+
+    data.forEach(function (incident) {
+
+        if (!incident.latitude || !incident.longitude) return;
+
+        let marker = L.circleMarker(
+            [parseFloat(incident.latitude), parseFloat(incident.longitude)],
+            {
+                radius: 5,
+                color: "red"
+            }
+        );
+
+        let popup = `
+        <b>Description:</b> ${incident.description || "N/A"}<br>
+        <b>Info:</b> ${incident.incident_info || "N/A"}
+        `;
+
+        marker.bindPopup(popup);
+
+        marker.addTo(map);
+    });
+}
+loadTrafficData();
