@@ -138,7 +138,7 @@
     </div>
     <div class="field">
       <label>Port</label>
-      <input id="port-input" type="number" value="8080" placeholder="8080"/>
+      <input id="port-input" type="number" value="8081" placeholder="8081"/>
     </div>
     <div style="display:flex;gap:6px;align-items:flex-end">
       <button class="btn" id="btn-connect">▶ Start</button>
@@ -230,7 +230,7 @@ function connect() {
   log(`Connecting to ${host}:${port} …`, 'info');
 
   client.connect({
-    useSSL:    false,
+    useSSL:    true,
     onSuccess: onConnected,
     onFailure: (err) => {
       log(`Connection failed: ${err.errorMessage}`, 'err');
