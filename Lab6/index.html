@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lab 6 — Line Simplification</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;600&display=swap" rel="stylesheet"/>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --panel: #1e0d60;
+      --border: #2a2f3e;
+      --accent: #bf76ed;
+      --red: #fd496d;
+      --blue: #45d1ee;
+      --text: #e8eaf2;
+      --muted: #9aaaff;
+      --panel-width: 300px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    #panel {
+      width: var(--panel-width);
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 28px 22px;
+      gap: 22px;
+      z-index: 1000;
+      flex-shrink: 0;
+    }
+
+    #panel h1 {
+      font-family: 'Space Mono', monospace;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.04em;
+      line-height: 1.4;
+    }
+
+    #panel h1 span {
+      display: block;
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-weight: 400;
+      margin-top: 4px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+    }
+
+    .section-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    /* Tolerance slider */
+    .slider-wrap label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .slider-wrap label span { font-size: 0.85rem; color: var(--text); }
+    .slider-wrap label code {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--accent);
+      background: rgba(79,255,176,0.1);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    input[type=range] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 11px 0;
+      border-radius: 8px;
+      border: none;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .btn-simplify {
+      background: var(--accent);
+      color: #0f1117;
+    }
+    .btn-simplify:hover:not(:disabled) { opacity: 0.88; }
+
+    .btn-clear {
+      background: transparent;
+      color: var(--red);
+      border: 1px solid var(--red);
+    }
+    .btn-clear:hover:not(:disabled) { background: rgba(255,95,126,0.08); }
+
+    /* Legend */
+    .legend { display: flex; flex-direction: column; gap: 9px; }
+    .legend-item { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
+    .swatch {
+      width: 32px; height: 4px; border-radius: 2px; flex-shrink: 0;
+    }
+    .swatch.original { background: var(--blue); }
+    .swatch.simplified { background: var(--red); }
+
+    /* Stats */
+    #stats {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      line-height: 1.9;
+      color: var(--muted);
+    }
+    #stats strong { color: var(--text); }
+    #stats .highlight { color: var(--accent); }
+
+    /* Instructions */
+    #instructions {
+      font-size: 0.82rem;
+      line-height: 1.65;
+      color: var(--muted);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    #instructions strong { color: var(--text); display: block; margin-bottom: 4px; }
+
+    /* Map */
+    #map {
+      flex: 1;
+      height: 100vh;
+    }
+
+    /* Leaflet dark override */
+    .leaflet-container { background: #1a1d27 !important; }
+    .leaflet-tile { filter: brightness(0.72) saturate(0.6) hue-rotate(180deg); }
+  </style>
+</head>
+<body>
+
+  <!-- ── SIDEBAR ── -->
+  <div id="panel">
+    <div>
+      <h1>Line Simplify<span>Lab 6 · Turf.js</span></h1>
+    </div>
+
+    <div class="divider"></div>
+
+    <div id="instructions">
+      <strong>How to use</strong>
+      Click anywhere on the map to place points and draw a polyline. Add at least 3 points, then hit Simplify.
+    </div>
+
+    <div>
+      <div class="section-label">Tolerance</div>
+      <div class="slider-wrap">
+        <label>
+          <span>Simplification</span>
+          <code id="toleranceVal">0.010</code>
+        </label>
+        <input type="range" id="tolerance" min="0.001" max="0.2" step="0.001" value="0.01"/>
+      </div>
+    </div>
+
+    <button class="btn btn-simplify" id="btnSimplify" disabled>▶ Simplify Line</button>
+    <button class="btn btn-clear" id="btnClear" disabled>✕ Clear &amp; Reset</button>
+
+    <div class="divider"></div>
+
+    <div>
+      <div class="section-label">Legend</div>
+      <div class="legend">
+        <div class="legend-item"><div class="swatch original"></div> Original line</div>
+        <div class="legend-item"><div class="swatch simplified"></div> Simplified line</div>
+      </div>
+    </div>
+
+    <div id="stats">
+      Points drawn: <strong id="statPoints">0</strong><br>
+      Original pts: <strong id="statOrig">—</strong><br>
+      Simplified pts: <strong class="highlight" id="statSimp">—</strong><br>
+      Reduction: <strong class="highlight" id="statReduction">—</strong>
+    </div>
+  </div>
+
+  <!-- ── MAP ── -->
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Turf.js -->
+  <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+
+  <script>
+    // ─────────────────────────────────────────
+    // STEP 2: Initialize  Leaflet map ~ center on North America
+    const map = L.map('map').setView([45, -95], 4);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    // ─────────────────────────────────────────
+    // STATE
+    // drawnPoints  → [lat, lng] from clicks
+    // drawnLayer   → the blue Leaflet polyline
+    // simplLayer   → the red simplified polyline
+    // markers      → small dot markers at each click point
+    let drawnPoints = [];
+    let drawnLayer  = null;
+    let simplLayer  = null;
+    let markers     = [];
+
+    // UI refs
+    const btnSimplify   = document.getElementById('btnSimplify');
+    const btnClear      = document.getElementById('btnClear');
+    const toleranceSlider = document.getElementById('tolerance');
+    const toleranceVal  = document.getElementById('toleranceVal');
+    const statPoints    = document.getElementById('statPoints');
+    const statOrig      = document.getElementById('statOrig');
+    const statSimp      = document.getElementById('statSimp');
+    const statReduction = document.getElementById('statReduction');
+
+    // ─────────────────────────────────────────
+    // STEP 3: Click-to-draw polyline
+    map.on('click', function(e) {
+      if (simplLayer) return;
+
+      const { lat, lng } = e.latlng;
+      drawnPoints.push([lat, lng]);
+
+      const dot = L.circleMarker([lat, lng], {
+        radius: 5,
+        color: '#4fa8ff',
+        fillColor: '#4fa8ff',
+        fillOpacity: 0.85,
+        weight: 2
+      }).addTo(map);
+      markers.push(dot);
+
+      // Remove old polyline layer and redraw with all current points
+      if (drawnLayer) map.removeLayer(drawnLayer);
+
+      if (drawnPoints.length >= 2) {
+        // Leaflet polyline takes [lat, lng] pairs
+        drawnLayer = L.polyline(drawnPoints, {
+          color: '#4fa8ff',
+          weight: 3,
+          opacity: 0.9,
+          dashArray: null
+        }).addTo(map);
+      }
+
+      // Update stats + button states
+      statPoints.textContent = drawnPoints.length;
+      if (drawnPoints.length >= 3) {
+        btnSimplify.disabled = false;
+      }
+      btnClear.disabled = false;
+    });
+
+    // ─────────────────────────────────────────
+    // STEP 4: Simplify button
+    btnSimplify.addEventListener('click', function() {
+      if (drawnPoints.length < 3) return;
+
+      // Turf expects GeoJSON coordinates as [lng, lat] (longitude first!)
+      const coords = drawnPoints.map(p => [p[1], p[0]]);
+
+      // Build a GeoJSON LineString feature
+      const line = turf.lineString(coords);
+
+      // Run Turf's simplify — tolerance is in degrees, highQuality=false = faster
+      const tolerance = parseFloat(toleranceSlider.value);
+      const simplified = turf.simplify(line, { tolerance: tolerance, highQuality: false });
+
+      // Extract simplified coordinates back to Leaflet's [lat, lng] format
+      const simpCoords = simplified.geometry.coordinates.map(c => [c[1], c[0]]);
+
+      // Remove old simplified layer if it exists
+      if (simplLayer) map.removeLayer(simplLayer);
+
+      // Draw simplified line in red, slightly thicker
+      simplLayer = L.polyline(simpCoords, {
+        color: '#ff5f7e',
+        weight: 4,
+        opacity: 0.95
+      }).addTo(map);
+
+      // Make the original line dashed + dimmer so simplified stands out
+      if (drawnLayer) {
+        drawnLayer.setStyle({ dashArray: '6 5', opacity: 0.45 });
+      }
+
+      // Update
+      const origCount = drawnPoints.length;
+      const simpCount  = simpCoords.length;
+      const reduction  = (((origCount - simpCount) / origCount) * 100).toFixed(1);
+
+      statOrig.textContent      = origCount;
+      statSimp.textContent      = simpCount;
+      statReduction.textContent = reduction + '%';
+
+      // Disable simplify again; user must clear first
+      btnSimplify.disabled = true;
+    });
+
+    // ─────────────────────────────────────────
+    // STEP 5: Clear button — full reset
+    btnClear.addEventListener('click', function() {
+      // Remove polylines from map
+      if (drawnLayer) { map.removeLayer(drawnLayer); drawnLayer = null; }
+      if (simplLayer) { map.removeLayer(simplLayer); simplLayer = null; }
+
+      // Remove dot markers
+      markers.forEach(m => map.removeLayer(m));
+      markers = [];
+
+      // Reset state
+      drawnPoints = [];
+
+      // Reset
+      btnSimplify.disabled = true;
+      btnClear.disabled    = true;
+      statPoints.textContent    = '0';
+      statOrig.textContent      = '—';
+      statSimp.textContent      = '—';
+      statReduction.textContent = '—';
+    });
+
+    // ─────────────────────────────────────────
+    // Tolerance slider — live update display
+    toleranceSlider.addEventListener('input', function() {
+      toleranceVal.textContent = parseFloat(this.value).toFixed(3);
+    });
+  </script>
+</body>
+</html>
